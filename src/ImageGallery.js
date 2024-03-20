@@ -8,13 +8,17 @@ const ImageGallery = () => {
   const [selectedImages, setSelectedImages] = useState([]);
 
   const fetchImages = async () => {
-    const response = await axios.get(`https://api.unsplash.com/search/photos`, {
-      params: { query: searchTerm, per_page: 9 },
-      headers: {
-        Authorization: `Client-ID ${process.env.REACT_APP_UNSPLASH_ACCESS_KEY}`,
-      },
-    });
-    setImages(response.data.results);
+    try {
+      const response = await axios.get(`https://api.unsplash.com/search/photos`, {
+        params: { query: searchTerm, per_page: 9 },
+        headers: {
+          Authorization: `Client-ID ${process.env.REACT_APP_UNSPLASH_ACCESS_KEY}`,
+        },
+      });
+      setImages(response.data.results);
+    } catch (error) {
+      console.error("Error fetching images:", error);
+    }
   };
 
   const handleSearch = (e) => {
@@ -47,15 +51,27 @@ const ImageGallery = () => {
         <button type="submit">Search</button>
       </form>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-        {images.map((image) => (
-          <img
-            key={image.id}
-            src={image.urls.small}
-            alt={image.alt_description}
-            style={{ width: '100px', height: '100px', objectFit: 'cover', cursor: 'pointer', border: selectedImages.includes(image) ? '2px solid blue' : 'none' }}
-            onClick={() => handleSelectImage(image)}
-          />
-        ))}
+        {images.map((image) => {
+          // Extract the base URL up to the query parameters
+          const baseUrl = image.urls.regular.split('?')[0];
+          
+          // Specify your desired dimensions
+          const width = 1080; // Adjust width as needed
+          const queryParams = `?w=${width}&q=80&fit=max`; // Adjust query parameters as needed
+          
+          // Reconstruct the URL with the new parameters
+          const customUrl = `${baseUrl}${queryParams}`;
+
+          return (
+            <img
+              key={image.id}
+              src={customUrl}
+              alt={image.alt_description}
+              style={{ width: '320px', height: '180px', objectFit: 'cover', cursor: 'pointer', border: selectedImages.includes(image) ? '2px solid blue' : 'none' }}
+              onClick={() => handleSelectImage(image)}
+            />
+          );
+        })}
       </div>
       <button onClick={saveToLocalStorage} disabled={selectedImages.length === 0}>Save Selected</button>
     </div>
